@@ -4,6 +4,7 @@ Copyright Alex Shaver 2026 - AGPLv3.0
 
 from pydantic import BaseModel
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -11,14 +12,15 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+    scopes: list[str] = []
 
 
 class User(BaseModel):
     username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
+    scopes: list[str] = []
 
 
-class UserInDB(User):
-    hashed_password: str
+class NewUser(BaseModel):
+    username: str
+    pwd_plaintext: str
+    allowed_scopes: list[str] = []
