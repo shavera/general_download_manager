@@ -12,13 +12,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.models import Token, NewUser, User
 from app.internal.security import (authenticate_user, create_access_token, get_current_user,
                                    ACCESS_TOKEN_EXPIRE_MINUTES, ADMIN_SCOPE)
-# from app.internal.admin_db import (add_user, search_users, update_user, DBError, User as DB_User)
 from app.internal import admin_db as db
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
-router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
+router = APIRouter(prefix="/api/v1/admin", tags=["Admin"])
 
 AdminDep = Annotated[User, Security(get_current_user, scopes=[ADMIN_SCOPE])]
 

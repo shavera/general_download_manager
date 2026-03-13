@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI
 from .models import User
 from .internal import admin_db
 from .internal.security import get_current_active_user
-from .routers import admin
+from .routers import admin, jobs
 
 
 @asynccontextmanager
@@ -25,6 +25,7 @@ app = FastAPI(title="General Download Manager API",
               lifespan=lifespan)
 
 app.include_router(admin.router)
+app.include_router(jobs.router)
 
 
 @app.get("/users/me/")
