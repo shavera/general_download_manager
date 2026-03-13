@@ -3,6 +3,7 @@ Copyright Alex Shaver 2026 - AGPLv3.0
 """
 
 from datetime import timedelta
+import logging
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status, APIRouter
@@ -11,7 +12,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from ..models import Token
 from .security import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, fake_users_db
 
-router = APIRouter()
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
+
+router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 @router.post("/token")
 async def login_for_access_token(

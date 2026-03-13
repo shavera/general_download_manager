@@ -3,6 +3,7 @@ Copyright Alex Shaver 2026 - AGPLv3.0
 """
 
 from datetime import datetime, timedelta, timezone
+import logging
 from typing import Annotated
 
 import jwt
@@ -12,6 +13,9 @@ from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
 from ..models import UserInDB, TokenData
+
+LOGGER=logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
 # to get a string like this run:
 # openssl rand -hex 32
@@ -33,7 +37,7 @@ password_hash = PasswordHash.recommended()
 
 DUMMY_HASH = password_hash.hash("dummypassword")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/token")
 
 def verify_password(plain_password, hashed_password):
     return password_hash.verify(plain_password, hashed_password)
@@ -43,15 +47,18 @@ def get_password_hash(password):
     return password_hash.hash(password)
 
 
-def get_user(db, username: str):
+def get_user(db, username: str) -> UserInDB | None:
     if username in db:
         user_dict = db[username]
+        LOGGER.debug(f"Found user {username}")
         return UserInDB(**user_dict)
+    return None
 
 
 def authenticate_user(fake_db, username: str, password: str):
     user = get_user(fake_db, username)
     if not user:
+        LOGGER.debug(f"User {username} not found")
         verify_password(password, DUMMY_HASH)
         return False
     if not verify_password(password, user.hashed_password):

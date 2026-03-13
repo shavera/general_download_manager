@@ -11,7 +11,11 @@ from .models import User
 from .internal import admin
 
 
-app = FastAPI()
+app = FastAPI(title="General Download Manager API",
+              openapi_url="/api/v1/openapi.json",
+              docs_url="/api/v1/docs",
+              redoc_url="/api/v1/redoc",
+              )
 
 app.include_router(admin.router)
 
