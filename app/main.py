@@ -7,9 +7,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI
 
-from .dependencies import get_current_active_user
 from .models import User
-from .internal import admin, admin_db
+from .internal import admin_db
+from .internal.security import get_current_active_user
+from .routers import admin
 
 
 @asynccontextmanager

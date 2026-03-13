@@ -7,7 +7,7 @@ import logging
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
@@ -108,9 +108,19 @@ async def get_current_user(
         print(f"check {check_for_scope}")
         if check_for_scope not in user_permitted_scopes:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Insufficient scope permissions",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient user scope permissions",
                 headers={"WWW-Authenticate": authenticate_value},
             )
     # Return a models user with scopes as they're provided from the token
     return models.User(username=db_user.username, scopes=token_data.scopes)
+
+# Would tweak this / break it into a few versions to things like 'get_current_admin_user', e.g.
+# by passing different sets of scopes
+# This current iteration just tries to get _some_ version of the user.
+async def get_current_active_user(
+    current_user: Annotated[models.User, Security(get_current_user, scopes=[])],
+):
+    if len(current_user.scopes) == 0:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
