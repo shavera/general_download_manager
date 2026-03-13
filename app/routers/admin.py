@@ -72,4 +72,6 @@ async def update_user(admin_user: AdminDep, user_info: NewUser, upsert: bool = F
 
 @router.put("/delete_user")
 async def delete_user(admin_user: AdminDep, username: str):
-    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED, "Haven't implemented delete user yet.")
+    if admin_user.username == username:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Requested to delete {username} while logged in as same")
+    db.delete_user(initiating_user=admin_user.username, username=username)

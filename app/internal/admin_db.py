@@ -180,3 +180,24 @@ def search_users(initiating_user: str, username: str | None) -> list[models.User
     else:
         return None if len(userlist) == 0 else userlist
 
+
+def delete_user(initiating_user: str, username: str):
+    with Session(engine) as session:
+        search_statement = select(User).where(User.username == username)
+        top_result = session.exec(search_statement).first()
+        log = AdminLog(
+            timestamp = datetime.now(timezone.utc),
+            initiating_user = initiating_user,
+            operation = "delete",
+            details = f"Deleted user '{username}'"
+        )
+        if top_result is None:
+            # if we can't find the user to delete, that's okay, do nothing instead.
+            log.details = f"Requested to delete user '{username}', which does not exist in the db"
+            session.add(log)
+            LOGGER.warning(log.details)
+            session.commit()
+            return
+        session.delete(top_result)
+        session.add(log)
+        session.commit()

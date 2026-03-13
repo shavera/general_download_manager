@@ -102,10 +102,8 @@ async def get_current_user(
         raise credentials_exception
 
     user_permitted_scopes = token_data.scopes
-    print(f"token scopes: {user_permitted_scopes}")
     scopes_from_get_user = security_scopes.scopes
     for check_for_scope in scopes_from_get_user:
-        print(f"check {check_for_scope}")
         if check_for_scope not in user_permitted_scopes:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
