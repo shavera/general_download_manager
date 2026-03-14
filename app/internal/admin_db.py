@@ -201,3 +201,8 @@ def delete_user(initiating_user: str, username: str):
         session.delete(top_result)
         session.add(log)
         session.commit()
+
+def log_action(log: AdminLog):
+    with Session(engine) as session:
+        session.add(log)
+        session.commit()

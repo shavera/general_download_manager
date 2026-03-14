@@ -4,25 +4,51 @@ Copyright Alex Shaver 2026 - AGPLv3.0
 
 from datetime import datetime, timedelta, timezone
 import logging
+import os
 from typing import Annotated
 
-import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
+import isodate
+import jwt
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
 from .. import models
 from . import admin_db
 
-LOGGER=logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = "19b158d65a431b5c8b6679d8d0d095b10dfc3443af53b64e0ef6a306e68ced55"
+SECRET_KEY = os.getenv("GEN_DL_SECRET_KEY")
+assert SECRET_KEY is not None and SECRET_KEY != "0", \
+    "Need to set nontrivial secret key to env var GEN_DL_SECRET_KEY"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+DEFAULT_ACCESS_TIME_DELTA = timedelta(minutes=30)
+
+
+def _get_access_expire_delta_from_env_var():
+    env = os.environ
+    if "GEN_DL_TOKEN_ACCESS_DELTA" not in env:
+        return DEFAULT_ACCESS_TIME_DELTA
+    td_str = env["GEN_DL_TOKEN_ACCESS_DELTA"]
+    td = isodate.parse_duration(td_str)
+    return td
+
+
+ACCESS_EXPIRE_TIMEDELTA = _get_access_expire_delta_from_env_var()
+
+
+def get_token_access_timedelta():
+    return ACCESS_EXPIRE_TIMEDELTA
+
+
+def set_token_access_timedelta(td: timedelta):
+    global ACCESS_EXPIRE_TIMEDELTA
+    ACCESS_EXPIRE_TIMEDELTA = td
 
 
 ADMIN_SCOPE = "admin"
@@ -39,6 +65,7 @@ oauth2_scheme = OAuth2PasswordBearer(
             WRITE_SCOPE: "Create new download jobs",
             READ_SCOPE: "Read status of existing download jobs"}
 )
+
 
 def verify_password(plain_password, hashed_password):
     return password_hash.verify(plain_password, hashed_password)
@@ -113,11 +140,12 @@ async def get_current_user(
     # Return a models user with scopes as they're provided from the token
     return models.User(username=db_user.username, scopes=token_data.scopes)
 
+
 # Would tweak this / break it into a few versions to things like 'get_current_admin_user', e.g.
 # by passing different sets of scopes
 # This current iteration just tries to get _some_ version of the user.
 async def get_current_active_user(
-    current_user: Annotated[models.User, Security(get_current_user, scopes=[])],
+        current_user: Annotated[models.User, Security(get_current_user, scopes=[])],
 ):
     if len(current_user.scopes) == 0:
         raise HTTPException(status_code=400, detail="Inactive user")
